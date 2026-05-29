@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ARIA Voice Receptionist Demo</title>
+  <style>
+    :root { font-family: system-ui, sans-serif; background: #0f1419; color: #e7ecf3; }
+    body { max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+    h1 { font-size: 1.4rem; }
+    .card { background: #1a2332; border-radius: 12px; padding: 1rem; margin: 1rem 0; }
+    button { background: #3b82f6; color: #fff; border: 0; padding: 0.6rem 1rem; border-radius: 8px; cursor: pointer; }
+    button:disabled { opacity: 0.5; }
+    #log { min-height: 200px; font-size: 0.9rem; line-height: 1.5; }
+    .user { color: #93c5fd; }
+    .agent { color: #86efac; }
+    .meta { color: #94a3b8; font-size: 0.8rem; }
+    input, select { width: 100%; padding: 0.5rem; margin: 0.5rem 0; border-radius: 6px; border: 1px solid #334155; background: #0f1419; color: #e7ecf3; }
+  </style>
+</head>
+<body>
+  <h1>ARIA Voice Receptionist Demo</h1>
+  <p class="meta">Fictional clinic data only · Simulates phone STT/TTS latency · <a href="/docs" style="color:#93c5fd">API docs</a></p>
+
+  <div class="card">
+    <label>Practice</label>
+    <select id="practice">
+      <option value="spine_demo">Summit Spine Demo Clinic</option>
+      <option value="primary_care_demo">Harbor Primary Care Demo</option>
+    </select>
+    <button id="start">Start call</button>
+  </div>
+
+  <div class="card" id="log"></div>
+
+  <div class="card">
+    <input id="input" placeholder="Say: My name is Jane Doe. I'd like to book tomorrow." />
+    <button id="send">Send</button>
+  </div>
+
+  <div class="card meta" id="metrics"></div>
+
+  <script>
+    let sessionId = null;
+    const log = document.getElementById('log');
+    const metrics = document.getElementById('metrics');
+
+    function add(role, text, extra = '') {
+      const p = document.createElement('p');
+      p.className = role;
+      p.innerHTML = `<strong>${role === 'user' ? 'Caller' : 'ARIA'}:</strong> ${text}${extra ? `<br><span class="meta">${extra}</span>` : ''}`;
+      log.appendChild(p);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    document.getElementById('start').onclick = async () => {
+      log.innerHTML = '';
+      const practice_id = document.getElementById('practice').value;
+      const r = await fetch('/api/simulate/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ practice_id }),
+      });
+      const d = await r.json();
+      sessionId = d.session_id;
+      add('agent', d.reply);
+      refreshMetrics();
+    };
+
+    document.getElementById('send').onclick = async () => {
+      const text = document.getElementById('input').value.trim();
+      if (!text || !sessionId) return;
+      add('user', text);
+      document.getElementById('input').value = '';
+      const r = await fetch('/api/simulate/message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId, text }),
+      });
+      const d = await r.json();
+      const lat = d.latency_ms ? `total ${d.latency_ms.total}ms (stt ${d.latency_ms.stt} / llm ${d.latency_ms.llm} / tts ${d.latency_ms.tts})` : '';
+      const tool = d.tool ? ` · tool: ${d.tool}` : '';
+      add('agent', d.reply, lat + tool);
+      refreshMetrics();
+    };
+
+    async function refreshMetrics() {
+      const r = await fetch('/api/metrics');
+      const m = await r.json();
+      metrics.textContent = `Metrics: ${m.turns} turns · p50 ${m.p50_total_ms}ms · p95 ${m.p95_total_ms}ms · avg LLM ${m.avg_llm_ms}ms`;
+    }
+  </script>
+</body>
+</html>

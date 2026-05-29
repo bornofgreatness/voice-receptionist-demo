@@ -1,0 +1,21 @@
+practice_id: spine_demo
+practice_name: Summit Spine Demo Clinic
+specialty: spine surgery
+timezone: America/New_York
+services:
+  - new_patient_consult
+  - follow_up
+  - post_op_check
+business_hours:
+  mon: "09:00-17:00"
+  tue: "09:00-17:00"
+  wed: "09:00-17:00"
+  thu: "09:00-17:00"
+  fri: "09:00-15:00"
+safety_keywords:
+  - chest pain
+  - can't breathe
+  - stroke
+  - suicidal
+  - emergency
+escalation_message: I'm connecting you with our clinical team now. Please stay on the line.

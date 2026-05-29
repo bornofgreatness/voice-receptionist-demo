@@ -1,0 +1,20 @@
+practice_id: primary_care_demo
+practice_name: Harbor Primary Care Demo
+specialty: primary care
+timezone: America/New_York
+services:
+  - annual_physical
+  - sick_visit
+  - vaccination
+business_hours:
+  mon: "08:00-18:00"
+  tue: "08:00-18:00"
+  wed: "08:00-18:00"
+  thu: "08:00-18:00"
+  fri: "08:00-16:00"
+safety_keywords:
+  - chest pain
+  - can't breathe
+  - severe bleeding
+  - emergency
+escalation_message: Please hold while I alert our nursing staff.
